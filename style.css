@@ -383,6 +383,38 @@ footer {
     font-size: 0.8rem;
 }
 
+/* About Page */
+.about-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-top: 60px;
+}
+
+.about-card {
+    background: var(--bg-glass);
+    border: 1px solid var(--border-glass);
+    padding: 40px;
+    border-radius: 30px;
+    transition: transform 0.3s;
+}
+
+.about-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.about-card h3 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    margin-bottom: 15px;
+}
+
+.about-card p {
+    color: var(--text-muted);
+    font-size: 1rem;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .hero-title {
