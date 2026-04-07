@@ -1,16 +1,135 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>OmniTools | Free Online Utilities & Image Converters</title>
-    <meta name="description" content="Premium dark-themed suite of free online tools. Convert images to PNG, compress images, count words, and more. Fast, secure, and private." />
-    <meta name="keywords" content="online tools, image converter, image compressor, word counter, text utilities, free tools, dark mode tools" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%236366f1%22/><path d=%22M30 20 L70 20 L50 80 Z%22 fill=%22white%22/></svg>">
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OmniTools - Premium Online Utilities</title>
+    <meta name="description" content="Free, fast, and secure online tools for everyone.">
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div class="container nav-container">
+            <div class="logo" onclick="showPage('home')">
+                <div class="logo-icon">
+                    <i data-lucide="zap"></i>
+                </div>
+                <span>Omni<span class="accent">Tools</span></span>
+            </div>
+            <div class="nav-links">
+                <a href="#" onclick="showPage('home')">Home</a>
+                <a href="#" onclick="showPage('tools')">Tools</a>
+                <a href="#" onclick="showPage('about')">About</a>
+            </div>
+        </div>
+    </nav>
 
+    <!-- Main Content -->
+    <main id="main-content">
+        <!-- Home Page -->
+        <section id="home-page" class="page active">
+            <div class="hero">
+                <h1 class="hero-title">All-in-One <span class="gradient-text">Free Online Tools</span></h1>
+                <p class="hero-desc">Fast, secure, and premium utilities for your daily digital needs. No registration, no ads, just pure productivity.</p>
+                <div class="search-container">
+                    <i data-lucide="search" class="search-icon"></i>
+                    <input type="text" id="tool-search" placeholder="Search for a tool (e.g. 'compress', 'word')..." onkeyup="filterTools()">
+                </div>
+            </div>
+
+            <div class="container">
+                <h2 class="section-title">Popular Tools</h2>
+                <div class="tools-grid" id="tools-grid">
+                    <!-- Tool Cards -->
+                    <div class="tool-card" onclick="openTool('img-to-png')">
+                        <div class="tool-icon-box"><i data-lucide="image"></i></div>
+                        <h3>Image to PNG</h3>
+                        <p>Convert any image format to high-quality PNG instantly.</p>
+                        <div class="tool-link">Open Tool <i data-lucide="arrow-right"></i></div>
+                    </div>
+                    <div class="tool-card" onclick="openTool('img-compress')">
+                        <div class="tool-icon-box"><i data-lucide="layers"></i></div>
+                        <h3>Image Compressor</h3>
+                        <p>Reduce image file size without losing visible quality.</p>
+                        <div class="tool-link">Open Tool <i data-lucide="arrow-right"></i></div>
+                    </div>
+                    <div class="tool-card" onclick="openTool('text-case')">
+                        <div class="tool-icon-box"><i data-lucide="type"></i></div>
+                        <h3>Text Case Converter</h3>
+                        <p>Switch between uppercase, lowercase, and title case.</p>
+                        <div class="tool-link">Open Tool <i data-lucide="arrow-right"></i></div>
+                    </div>
+                    <div class="tool-card" onclick="openTool('word-counter')">
+                        <div class="tool-icon-box"><i data-lucide="file-text"></i></div>
+                        <h3>Word Counter</h3>
+                        <p>Detailed statistics for your text: words, chars, and more.</p>
+                        <div class="tool-link">Open Tool <i data-lucide="arrow-right"></i></div>
+                    </div>
+                    <div class="tool-card" onclick="openTool('calculator')">
+                        <div class="tool-icon-box"><i data-lucide="calculator"></i></div>
+                        <h3>Smart Calculator</h3>
+                        <p>A clean, modern calculator for quick daily math.</p>
+                        <div class="tool-link">Open Tool <i data-lucide="arrow-right"></i></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tool Detail Page -->
+        <section id="tool-page" class="page">
+            <div class="container">
+                <button class="back-btn" onclick="showPage('home')">
+                    <i data-lucide="arrow-left"></i> Back to All Tools
+                </button>
+                <div id="tool-container" class="glass-panel">
+                    <!-- Tool content will be injected here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- About Page -->
+        <section id="about-page" class="page">
+            <div class="container about-container">
+                <h1>About <span class="accent">OmniTools</span></h1>
+                <p>OmniTools was born from a simple idea: the internet needs better, faster, and more beautiful utilities that respect user privacy.</p>
+                <div class="about-grid">
+                    <div class="about-card">
+                        <h3>Our Mission</h3>
+                        <p>To provide the highest quality digital tools for free, accessible to everyone, everywhere.</p>
+                    </div>
+                    <div class="about-card">
+                        <h3>Privacy First</h3>
+                        <p>We use client-side processing. Your files never leave your computer.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container footer-container">
+            <div class="footer-info">
+                <div class="logo">
+                    <div class="logo-icon"><i data-lucide="zap"></i></div>
+                    <span>OmniTools</span>
+                </div>
+                <p>Premium, fast, and secure online tools designed for everyone.</p>
+            </div>
+            <div class="footer-links">
+                <p>© 2026 OmniTools. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+</html>
