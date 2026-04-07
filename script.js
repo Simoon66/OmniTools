@@ -1,7 +1,16 @@
 // Page Navigation
 function showPage(pageId) {
-    document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
-    document.getElementById(pageId + '-page').classList.add('active');
+    const pages = document.querySelectorAll('.page');
+    pages.forEach(page => page.classList.remove('active'));
+    
+    const targetPage = document.getElementById(pageId + '-page');
+    if (targetPage) {
+        targetPage.classList.add('active');
+    } else {
+        console.warn(`Page with ID ${pageId}-page not found. Defaulting to home.`);
+        const homePage = document.getElementById('home-page');
+        if (homePage) homePage.classList.add('active');
+    }
     window.scrollTo(0, 0);
 }
 
