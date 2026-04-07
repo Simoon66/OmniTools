@@ -3,138 +3,101 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
-  Image as ImageIcon, 
-  Type, 
-  Calculator as CalcIcon, 
-  FileText, 
-  Search, 
-  Download, 
-  Upload, 
-  Check, 
-  Copy, 
-  RefreshCw, 
-  ArrowRight,
-  Info,
-  Layers,
-  Zap,
-  Shield,
-  Menu,
-  X,
-  Github
+  Image as ImageIcon, Type, Calculator as CalcIcon, FileText, Search, Download, 
+  Upload, Check, Copy, RefreshCw, ArrowRight, Info, Layers, Zap, Shield, Menu, X, Github
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
-// --- Types ---
-
+// --- Types & Constants ---
 type ToolId = 'img-to-png' | 'img-compress' | 'text-case' | 'word-counter' | 'calculator';
-
-interface Tool {
-  id: ToolId;
-  name: string;
-  description: string;
-  icon: any;
-  category: 'Image' | 'Text' | 'Utility';
-}
+interface Tool { id: ToolId; name: string; description: string; icon: any; category: string; }
 
 const TOOLS: Tool[] = [
-  {
-    id: 'img-to-png',
-    name: 'Image to PNG',
-    description: 'Convert any image format to high-quality PNG instantly.',
-    icon: ImageIcon,
-    category: 'Image'
-  },
-  {
-    id: 'img-compress',
-    name: 'Image Compressor',
-    description: 'Reduce image file size without losing visible quality.',
-    icon: Layers,
-    category: 'Image'
-  },
-  {
-    id: 'text-case',
-    name: 'Text Case Converter',
-    description: 'Switch between uppercase, lowercase, and title case.',
-    icon: Type,
-    category: 'Text'
-  },
-  {
-    id: 'word-counter',
-    name: 'Word Counter',
-    description: 'Detailed statistics for your text: words, chars, and more.',
-    icon: FileText,
-    category: 'Text'
-  },
-  {
-    id: 'calculator',
-    name: 'Smart Calculator',
-    description: 'A clean, modern calculator for quick daily math.',
-    icon: CalcIcon,
-    category: 'Utility'
-  }
+  { id: 'img-to-png', name: 'Image to PNG', description: 'Convert any image format to high-quality PNG instantly.', icon: ImageIcon, category: 'Image' },
+  { id: 'img-compress', name: 'Image Compressor', description: 'Reduce image file size without losing visible quality.', icon: Layers, category: 'Image' },
+  { id: 'text-case', name: 'Text Case Converter', description: 'Switch between uppercase, lowercase, and title case.', icon: Type, category: 'Text' },
+  { id: 'word-counter', name: 'Word Counter', description: 'Detailed statistics for your text: words, chars, and more.', icon: FileText, category: 'Text' },
+  { id: 'calculator', name: 'Smart Calculator', description: 'A clean, modern calculator for quick daily math.', icon: CalcIcon, category: 'Utility' }
 ];
 
-// --- Components ---
+// --- Shared Components ---
+const MeshBackground = () => (
+  <>
+    <div className="bg-mesh" />
+    <div className="bg-noise" />
+  </>
+);
 
 const Navbar = ({ onNavigate, currentPage }: { onNavigate: (page: string) => void, currentPage: string }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const navItems = ['home', 'tools', 'about'];
+
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 20);
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-white/5">
+    <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'py-4 md:py-6' : 'py-6 md:py-10'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => onNavigate('home')}>
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center">
-              <Zap className="w-5 h-5 text-white" />
+        <div className={`glass rounded-2xl md:rounded-[2rem] px-6 md:px-10 h-16 md:h-20 flex items-center justify-between transition-all duration-500 ${scrolled ? 'shadow-2xl shadow-black/50 border-white/10' : 'border-white/5'}`}>
+          <div className="flex items-center gap-2 md:gap-4 cursor-pointer group" onClick={() => onNavigate('home')}>
+            <div className="w-8 h-8 md:w-12 md:h-12 rounded-lg md:rounded-2xl accent-gradient flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500">
+              <Zap className="w-5 h-5 md:w-7 md:h-7 text-white fill-current" />
             </div>
-            <span className="text-xl font-display font-bold tracking-tight">Omni<span className="text-indigo-400">Tools</span></span>
+            <span className="text-xl md:text-3xl font-display font-black tracking-tighter">Omni<span className="text-indigo-400">Tools</span></span>
           </div>
           
-          <div className="hidden md:block">
-            <div className="ml-10 flex items-baseline space-x-8">
-              {['home', 'tools', 'about'].map((page) => (
-                <button
-                  key={page}
-                  onClick={() => onNavigate(page)}
-                  className={`px-3 py-2 rounded-md text-sm font-medium capitalize transition-colors ${
-                    currentPage === page ? 'text-indigo-400' : 'text-zinc-400 hover:text-white'
-                  }`}
-                >
-                  {page}
-                </button>
-              ))}
-            </div>
+          <div className="hidden md:flex items-center space-x-12">
+            {navItems.map(page => (
+              <button 
+                key={page} 
+                onClick={() => onNavigate(page)} 
+                className={`relative px-2 py-1 text-sm font-bold uppercase tracking-widest transition-all duration-300 ${currentPage === page ? 'text-white' : 'text-zinc-500 hover:text-zinc-200'}`}
+              >
+                {page}
+                {currentPage === page && (
+                  <motion.div layoutId="nav-underline" className="absolute -bottom-2 left-0 right-0 h-1 bg-indigo-500 rounded-full shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
+                )}
+              </button>
+            ))}
           </div>
 
-          <div className="md:hidden">
-            <button onClick={() => setIsOpen(!isOpen)} className="text-zinc-400 hover:text-white">
+          <div className="flex items-center gap-4">
+            <button className="hidden md:flex glass px-6 py-2.5 rounded-full text-sm font-bold hover:bg-white/10 transition-all active:scale-95 border-white/10">
+              Sign In
+            </button>
+            <button onClick={() => setIsOpen(!isOpen)} className="md:hidden p-2 text-zinc-400 hover:text-white transition-colors">
               {isOpen ? <X /> : <Menu />}
             </button>
           </div>
         </div>
       </div>
-
-      {/* Mobile Menu */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden glass border-t border-white/5 overflow-hidden"
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95, y: -20 }} 
+            animate={{ opacity: 1, scale: 1, y: 0 }} 
+            exit={{ opacity: 0, scale: 0.95, y: -20 }} 
+            className="md:hidden fixed inset-x-4 top-24 z-50 glass rounded-3xl border border-white/10 overflow-hidden shadow-2xl shadow-black"
           >
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
-              {['home', 'tools', 'about'].map((page) => (
-                <button
-                  key={page}
-                  onClick={() => { onNavigate(page); setIsOpen(false); }}
-                  className="block px-3 py-2 rounded-md text-base font-medium text-zinc-400 hover:text-white hover:bg-white/5 w-full text-left capitalize"
+            <div className="p-8 space-y-4">
+              {navItems.map(page => (
+                <button 
+                  key={page} 
+                  onClick={() => { onNavigate(page); setIsOpen(false); }} 
+                  className={`block px-6 py-4 rounded-2xl text-xl font-bold transition-all ${currentPage === page ? 'accent-gradient text-white shadow-lg shadow-indigo-500/20' : 'text-zinc-400 hover:text-white hover:bg-white/5'} w-full text-left capitalize`}
                 >
                   {page}
                 </button>
               ))}
+              <div className="pt-4 border-t border-white/5">
+                <button className="w-full accent-gradient py-4 rounded-2xl font-bold text-white shadow-lg shadow-indigo-500/20">Get Started</button>
+              </div>
             </div>
           </motion.div>
         )}
@@ -143,50 +106,56 @@ const Navbar = ({ onNavigate, currentPage }: { onNavigate: (page: string) => voi
   );
 };
 
-const Footer = () => (
-  <footer className="glass border-t border-white/5 py-12 mt-20">
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-        <div className="col-span-1 md:col-span-2">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-6 h-6 rounded bg-indigo-600 flex items-center justify-center">
-              <Zap className="w-4 h-4 text-white" />
-            </div>
-            <span className="text-lg font-display font-bold">OmniTools</span>
+const Footer = ({ onNavigate }: { onNavigate: (page: string) => void }) => (
+  <footer className="glass border-t border-white/[0.05] py-20 md:py-32 mt-32 relative overflow-hidden">
+    <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-px bg-gradient-to-r from-transparent via-indigo-500/50 to-transparent" />
+    <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-16 md:gap-24">
+      <div className="col-span-1 sm:col-span-2 md:col-span-2 space-y-8">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl accent-gradient flex items-center justify-center shadow-xl shadow-indigo-500/20">
+            <Zap className="w-7 h-7 text-white fill-current" />
           </div>
-          <p className="text-zinc-500 max-w-xs">
-            Premium, fast, and secure online tools designed for creators, developers, and everyone in between.
-          </p>
+          <span className="text-3xl font-display font-black tracking-tighter">OmniTools</span>
         </div>
-        <div>
-          <h4 className="text-sm font-semibold text-white mb-4 uppercase tracking-wider">Product</h4>
-          <ul className="space-y-2 text-sm text-zinc-500">
-            <li><button className="hover:text-indigo-400">All Tools</button></li>
-            <li><button className="hover:text-indigo-400">New Tools</button></li>
-            <li><button className="hover:text-indigo-400">API</button></li>
-          </ul>
-        </div>
-        <div>
-          <h4 className="text-sm font-semibold text-white mb-4 uppercase tracking-wider">Company</h4>
-          <ul className="space-y-2 text-sm text-zinc-500">
-            <li><button className="hover:text-indigo-400">About Us</button></li>
-            <li><button className="hover:text-indigo-400">Privacy Policy</button></li>
-            <li><button className="hover:text-indigo-400">Contact</button></li>
-          </ul>
+        <p className="text-zinc-500 text-lg md:text-xl max-w-sm leading-relaxed font-light">
+          Crafting premium, fast, and secure online utilities for the modern web. 
+          Local-first processing, privacy-focused, and always free.
+        </p>
+        <div className="flex gap-4">
+          <button className="w-12 h-12 rounded-2xl glass flex items-center justify-center text-zinc-500 hover:text-white hover:bg-white/10 transition-all duration-300"><Github className="w-6 h-6" /></button>
+          <button className="w-12 h-12 rounded-2xl glass flex items-center justify-center text-zinc-500 hover:text-white hover:bg-white/10 transition-all duration-300"><Zap className="w-6 h-6" /></button>
         </div>
       </div>
-      <div className="mt-12 pt-8 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-4">
-        <p className="text-xs text-zinc-600">© 2026 OmniTools. All rights reserved.</p>
-        <div className="flex gap-6">
-          <Github className="w-5 h-5 text-zinc-600 hover:text-white cursor-pointer transition-colors" />
-        </div>
+      
+      <div className="space-y-8">
+        <h4 className="text-sm font-black text-white uppercase tracking-[0.2em]">Product</h4>
+        <ul className="space-y-5 text-zinc-500 text-lg">
+          <li><button onClick={() => onNavigate('tools')} className="hover:text-indigo-400 transition-all hover:translate-x-2 flex items-center gap-2 group">All Tools <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all" /></button></li>
+          <li><button onClick={() => onNavigate('home')} className="hover:text-indigo-400 transition-all hover:translate-x-2 flex items-center gap-2 group">Featured <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all" /></button></li>
+          <li><button className="hover:text-indigo-400 transition-all hover:translate-x-2">Changelog</button></li>
+        </ul>
+      </div>
+
+      <div className="space-y-8">
+        <h4 className="text-sm font-black text-white uppercase tracking-[0.2em]">Company</h4>
+        <ul className="space-y-5 text-zinc-500 text-lg">
+          <li><button onClick={() => onNavigate('about')} className="hover:text-indigo-400 transition-all hover:translate-x-2 flex items-center gap-2 group">About Us <ArrowRight className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-all" /></button></li>
+          <li><button className="hover:text-indigo-400 transition-all hover:translate-x-2">Privacy Policy</button></li>
+          <li><button className="hover:text-indigo-400 transition-all hover:translate-x-2">Terms of Service</button></li>
+        </ul>
+      </div>
+    </div>
+    
+    <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 mt-24 md:mt-32 pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+      <p className="text-zinc-600 text-sm font-medium">© 2026 OmniTools. All rights reserved.</p>
+      <div className="flex items-center gap-2 text-zinc-600 text-sm font-medium">
+        Made with <Zap className="w-4 h-4 text-indigo-500 fill-current" /> for the community
       </div>
     </div>
   </footer>
 );
 
-// --- Tool Implementations ---
-
+// --- Tool Components ---
 const ImageToPng = () => {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
@@ -195,61 +164,57 @@ const ImageToPng = () => {
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
-    if (f) {
-      setFile(f);
-      setPreview(URL.createObjectURL(f));
-      setResult(null);
-    }
+    if (f) { setFile(f); setPreview(URL.createObjectURL(f)); setResult(null); }
   };
 
-  const convert = async () => {
+  const convert = () => {
     if (!file) return;
     setIsProcessing(true);
-    
     const img = new Image();
     img.src = URL.createObjectURL(file);
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      ctx?.drawImage(img, 0, 0);
-      const dataUrl = canvas.toDataURL('image/png');
-      setResult(dataUrl);
+      canvas.width = img.width; canvas.height = img.height;
+      canvas.getContext('2d')?.drawImage(img, 0, 0);
+      setResult(canvas.toDataURL('image/png'));
       setIsProcessing(false);
     };
   };
 
   return (
-    <div className="space-y-6">
-      <div className="glass p-8 rounded-2xl border-dashed border-2 border-white/10 flex flex-col items-center justify-center text-center cursor-pointer hover:border-indigo-500/50 transition-colors relative">
-        <input type="file" onChange={handleFile} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
-        <Upload className="w-12 h-12 text-zinc-600 mb-4" />
-        <p className="text-zinc-300 font-medium">{file ? file.name : 'Click or drag image to upload'}</p>
-        <p className="text-zinc-500 text-sm mt-1">Supports JPG, WEBP, BMP, etc.</p>
+    <div className="space-y-6 md:space-y-10">
+      <div className="glass-card p-8 md:p-12 rounded-2xl md:rounded-3xl border-dashed border-2 border-white/10 flex flex-col items-center justify-center text-center cursor-pointer hover:border-indigo-500/50 transition-all duration-500 relative group overflow-hidden">
+        <div className="absolute inset-0 bg-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        <input type="file" onChange={handleFile} className="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/*" />
+        <div className="relative z-0 flex flex-col items-center">
+          <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl md:rounded-2xl bg-white/5 flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 transition-transform duration-500">
+            <Upload className="w-8 h-8 md:w-10 md:h-10 text-indigo-400" />
+          </div>
+          <p className="text-lg md:text-xl font-semibold text-zinc-200 mb-1 md:mb-2">{file ? file.name : 'Drop your image here'}</p>
+          <p className="text-xs md:text-sm text-zinc-500">Supports JPG, WEBP, GIF, and more</p>
+        </div>
       </div>
-
       {preview && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col items-center gap-6">
-          <img src={preview} alt="Preview" className="max-h-64 rounded-xl shadow-2xl border border-white/10" />
+        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="flex flex-col items-center gap-6 md:gap-8">
+          <div className="relative group">
+            <div className="absolute -inset-4 bg-indigo-500/10 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+            <img src={preview} alt="Preview" className="relative max-h-60 md:max-h-80 rounded-2xl border border-white/10 shadow-2xl" />
+          </div>
           {!result ? (
-            <button
-              onClick={convert}
-              disabled={isProcessing}
-              className="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 disabled:bg-zinc-800 text-white rounded-xl font-semibold flex items-center gap-2 transition-all"
-            >
-              {isProcessing ? <RefreshCw className="animate-spin" /> : <Zap className="w-5 h-5" />}
+            <button onClick={convert} disabled={isProcessing} className="w-full md:w-auto px-8 md:px-10 py-3 md:py-4 accent-gradient text-white rounded-xl md:rounded-2xl font-bold flex items-center justify-center gap-3 shadow-lg shadow-indigo-500/25 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:scale-100">
+              {isProcessing ? <RefreshCw className="animate-spin w-5 h-5" /> : <Zap className="w-5 h-5" />} 
               {isProcessing ? 'Converting...' : 'Convert to PNG'}
             </button>
           ) : (
-            <a
-              href={result}
-              download="converted-omnitools.png"
-              className="px-8 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-semibold flex items-center gap-2 transition-all"
+            <motion.a 
+              initial={{ y: 10, opacity: 0 }} 
+              animate={{ y: 0, opacity: 1 }}
+              href={result} 
+              download="omnitools-converted.png" 
+              className="w-full md:w-auto px-8 md:px-10 py-3 md:py-4 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl md:rounded-2xl font-bold flex items-center justify-center gap-3 shadow-lg shadow-emerald-500/25 hover:scale-105 active:scale-95 transition-all"
             >
-              <Download className="w-5 h-5" />
-              Download PNG
-            </a>
+              <Download className="w-5 h-5" /> Download PNG
+            </motion.a>
           )}
         </motion.div>
       )}
@@ -265,90 +230,110 @@ const ImageCompressor = () => {
 
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
-    if (f) {
-      setFile(f);
-      setResult(null);
-    }
+    if (f) { setFile(f); setResult(null); }
   };
 
   const compress = () => {
     if (!file) return;
     setIsProcessing(true);
-    
     const img = new Image();
     img.src = URL.createObjectURL(file);
     img.onload = () => {
       const canvas = document.createElement('canvas');
-      canvas.width = img.width;
-      canvas.height = img.height;
-      const ctx = canvas.getContext('2d');
-      ctx?.drawImage(img, 0, 0);
-      
-      const dataUrl = canvas.toDataURL('image/jpeg', quality);
-      // Estimate size from base64
-      const size = Math.round((dataUrl.length * 3) / 4);
-      
-      setResult({ url: dataUrl, size });
-      setIsProcessing(false);
+      canvas.width = img.width; canvas.height = img.height;
+      canvas.getContext('2d')?.drawImage(img, 0, 0);
+      canvas.toBlob((blob) => {
+        if (blob) {
+          setResult({ url: URL.createObjectURL(blob), size: blob.size });
+          setIsProcessing(false);
+        }
+      }, 'image/jpeg', quality);
     };
   };
 
   return (
-    <div className="space-y-8">
-      <div className="glass p-8 rounded-2xl border-dashed border-2 border-white/10 flex flex-col items-center justify-center text-center cursor-pointer hover:border-indigo-500/50 transition-colors relative">
-        <input type="file" onChange={handleFile} className="absolute inset-0 opacity-0 cursor-pointer" accept="image/*" />
-        <Layers className="w-12 h-12 text-zinc-600 mb-4" />
-        <p className="text-zinc-300 font-medium">{file ? file.name : 'Upload image to compress'}</p>
-      </div>
-
-      {file && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-          <div className="space-y-4">
-            <div className="flex justify-between text-sm">
-              <span className="text-zinc-400">Compression Quality</span>
-              <span className="text-indigo-400 font-mono">{Math.round(quality * 100)}%</span>
-            </div>
-            <input 
-              type="range" 
-              min="0.1" 
-              max="1.0" 
-              step="0.05" 
-              value={quality} 
-              onChange={(e) => setQuality(parseFloat(e.target.value))}
-              className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
-            />
+    <div className="space-y-8 md:space-y-12">
+      <div className="glass-card p-8 md:p-12 rounded-2xl md:rounded-3xl border-dashed border-2 border-white/10 flex flex-col items-center justify-center text-center cursor-pointer hover:border-indigo-500/50 transition-all duration-500 relative group overflow-hidden">
+        <div className="absolute inset-0 bg-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        <input type="file" onChange={handleFile} className="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/*" />
+        <div className="relative z-0 flex flex-col items-center">
+          <div className="w-16 h-16 md:w-20 md:h-20 rounded-xl md:rounded-2xl bg-white/5 flex items-center justify-center mb-4 md:mb-6 group-hover:scale-110 transition-transform duration-500">
+            <Layers className="w-8 h-8 md:w-10 md:h-10 text-indigo-400" />
           </div>
+          <p className="text-lg md:text-xl font-semibold text-zinc-200 mb-1 md:mb-2">{file ? file.name : 'Select image to compress'}</p>
+          <p className="text-xs md:text-sm text-zinc-500">Original size: {file ? (file.size / 1024).toFixed(2) + ' KB' : 'Supports JPG, PNG, WEBP'}</p>
+        </div>
+      </div>
+      {file && (
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 md:space-y-10">
+          <div className="space-y-4 md:space-y-6">
+            <div className="flex justify-between items-end">
+              <div>
+                <h4 className="text-base md:text-lg font-bold text-white mb-1">Compression Quality</h4>
+                <p className="text-zinc-500 text-xs md:text-sm">Balanced quality vs file size</p>
+              </div>
+              <span className="text-2xl md:text-3xl font-display font-bold text-indigo-400 text-glow">{Math.round(quality * 100)}%</span>
+            </div>
+            <div className="relative h-3 md:h-4 w-full bg-white/5 rounded-full overflow-hidden border border-white/5">
+              <input 
+                type="range" 
+                min="0.1" 
+                max="1.0" 
+                step="0.05" 
+                value={quality} 
+                onChange={(e) => setQuality(parseFloat(e.target.value))} 
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" 
+              />
+              <motion.div 
+                className="absolute inset-y-0 left-0 accent-gradient" 
+                initial={false}
+                animate={{ width: `${quality * 100}%` }}
+              />
+            </div>
+            <div className="flex justify-between text-[10px] md:text-xs font-bold text-zinc-600 uppercase tracking-widest">
+              <span>Small Size</span>
+              <span>High Quality</span>
+            </div>
+          </div>
+          
+          <button 
+            onClick={compress} 
+            disabled={isProcessing} 
+            className="w-full py-4 md:py-5 accent-gradient text-white rounded-xl md:rounded-2xl font-bold text-base md:text-lg flex items-center justify-center gap-3 shadow-xl shadow-indigo-500/20 hover:scale-[1.02] active:scale-95 transition-all disabled:opacity-50"
+          >
+            {isProcessing ? <RefreshCw className="animate-spin w-5 h-5 md:w-6 md:h-6" /> : <Zap className="w-5 h-5 md:w-6 md:h-6" />} 
+            {isProcessing ? 'Optimizing...' : 'Compress Image Now'}
+          </button>
 
-          <div className="flex flex-col items-center gap-4">
-            <button
-              onClick={compress}
-              disabled={isProcessing}
-              className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 disabled:bg-zinc-800 text-white rounded-xl font-semibold flex items-center justify-center gap-2 transition-all"
+          {result && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }} 
+              animate={{ opacity: 1, scale: 1 }}
+              className="glass-card p-6 md:p-8 rounded-2xl md:rounded-3xl flex flex-col md:flex-row items-center justify-between gap-6 md:gap-8 border-indigo-500/20"
             >
-              {isProcessing ? <RefreshCw className="animate-spin" /> : <Zap className="w-5 h-5" />}
-              {isProcessing ? 'Processing...' : 'Compress Image'}
-            </button>
-
-            {result && (
-              <div className="w-full glass p-6 rounded-xl border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="text-left">
-                  <p className="text-xs text-zinc-500 uppercase tracking-wider">New Size</p>
-                  <p className="text-xl font-display font-bold">{(result.size / 1024).toFixed(2)} KB</p>
-                  <p className="text-xs text-emerald-400 mt-1">
-                    Saved {Math.round((1 - result.size / file.size) * 100)}%
-                  </p>
+              <div className="flex gap-6 md:gap-10">
+                <div>
+                  <p className="text-[10px] md:text-xs font-bold text-zinc-500 uppercase tracking-widest mb-1 md:mb-2">Original</p>
+                  <p className="text-xl md:text-2xl font-display font-bold text-zinc-400">{(file.size / 1024).toFixed(1)} KB</p>
                 </div>
-                <a
-                  href={result.url}
-                  download={`compressed-${file.name}`}
-                  className="px-6 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium flex items-center gap-2 transition-all"
+                <div className="w-px h-10 md:h-12 bg-white/10" />
+                <div>
+                  <p className="text-[10px] md:text-xs font-bold text-indigo-400 uppercase tracking-widest mb-1 md:mb-2">Compressed</p>
+                  <p className="text-xl md:text-2xl font-display font-bold text-white">{(result.size / 1024).toFixed(1)} KB</p>
+                </div>
+              </div>
+              <div className="text-center md:text-right w-full md:w-auto">
+                <p className="text-xs md:text-sm font-bold text-emerald-400 mb-3 md:mb-4">Saved {Math.round((1 - result.size / file.size) * 100)}%</p>
+                <a 
+                  href={result.url} 
+                  download={`compressed-${file.name}`} 
+                  className="w-full md:w-auto px-6 md:px-8 py-2.5 md:py-3 bg-white text-black hover:bg-zinc-200 rounded-lg md:rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg"
                 >
-                  <Download className="w-4 h-4" />
-                  Download
+                  <Download className="w-4 h-4 md:w-5 md:h-5" /> Download
                 </a>
               </div>
-            )}
-          </div>
+            </motion.div>
+          )}
         </motion.div>
       )}
     </div>
@@ -358,38 +343,45 @@ const ImageCompressor = () => {
 const TextCaseConverter = () => {
   const [text, setText] = useState('');
   const [copied, setCopied] = useState(false);
-
-  const convert = (type: 'upper' | 'lower' | 'title') => {
+  const convert = (type: string) => {
     if (type === 'upper') setText(text.toUpperCase());
-    if (type === 'lower') setText(text.toLowerCase());
-    if (type === 'title') {
-      setText(text.toLowerCase().split(' ').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' '));
-    }
+    else if (type === 'lower') setText(text.toLowerCase());
+    else setText(text.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '));
   };
-
-  const copy = () => {
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const copy = () => { navigator.clipboard.writeText(text); setCopied(true); setTimeout(() => setCopied(false), 2000); };
 
   return (
-    <div className="space-y-6">
-      <textarea
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder="Paste your text here..."
-        className="w-full h-64 glass p-6 rounded-2xl border border-white/10 focus:border-indigo-500/50 outline-none resize-none text-zinc-300 placeholder:text-zinc-600 transition-all"
-      />
-      
-      <div className="flex flex-wrap gap-3">
-        <button onClick={() => convert('upper')} className="px-4 py-2 glass glass-hover rounded-lg text-sm font-medium">UPPERCASE</button>
-        <button onClick={() => convert('lower')} className="px-4 py-2 glass glass-hover rounded-lg text-sm font-medium">lowercase</button>
-        <button onClick={() => convert('title')} className="px-4 py-2 glass glass-hover rounded-lg text-sm font-medium">Title Case</button>
-        <div className="flex-grow" />
-        <button onClick={copy} className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-medium flex items-center gap-2">
-          {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-          {copied ? 'Copied!' : 'Copy Text'}
+    <div className="space-y-6 md:space-y-8">
+      <div className="relative group">
+        <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 rounded-2xl md:rounded-3xl blur opacity-0 group-focus-within:opacity-100 transition duration-500" />
+        <textarea 
+          value={text} 
+          onChange={(e) => setText(e.target.value)} 
+          placeholder="Type or paste your text here..." 
+          className="relative w-full h-64 md:h-80 glass-card p-6 md:p-10 rounded-2xl md:rounded-3xl border border-white/10 outline-none text-zinc-200 text-base md:text-lg leading-relaxed transition-all focus:border-indigo-500/50 resize-none" 
+        />
+      </div>
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+        <div className="flex p-1 glass rounded-xl md:rounded-2xl border border-white/5 overflow-x-auto">
+          {['upper', 'lower', 'title'].map(t => (
+            <button 
+              key={t} 
+              onClick={() => convert(t)} 
+              className="px-4 md:px-6 py-2 md:py-2.5 rounded-lg md:rounded-xl text-xs md:text-sm font-bold capitalize transition-all hover:bg-white/5 text-zinc-400 hover:text-white whitespace-nowrap"
+            >
+              {t} case
+            </button>
+          ))}
+        </div>
+        <div className="hidden sm:block flex-grow" />
+        <button 
+          onClick={copy} 
+          className={`w-full sm:w-auto px-6 md:px-8 py-3 md:py-3.5 rounded-xl md:rounded-2xl text-sm font-bold flex items-center justify-center gap-3 transition-all shadow-lg ${
+            copied ? 'bg-emerald-600 text-white shadow-emerald-500/20' : 'accent-gradient text-white shadow-indigo-500/20 hover:scale-105 active:scale-95'
+          }`}
+        >
+          {copied ? <Check className="w-5 h-5" /> : <Copy className="w-5 h-5" />} 
+          {copied ? 'Copied!' : 'Copy Result'}
         </button>
       </div>
     </div>
@@ -398,37 +390,32 @@ const TextCaseConverter = () => {
 
 const WordCounter = () => {
   const [text, setText] = useState('');
-
-  const stats = useMemo(() => {
-    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
-    const chars = text.length;
-    const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0).length;
-    const paragraphs = text.split(/\n+/).filter(p => p.trim().length > 0).length;
-    return { words, chars, sentences, paragraphs };
-  }, [text]);
+  const stats = useMemo(() => ({
+    words: text.trim() ? text.trim().split(/\s+/).length : 0,
+    chars: text.length,
+    sentences: text.split(/[.!?]+/).filter(s => s.trim().length > 0).length,
+    paragraphs: text.split(/\n+/).filter(p => p.trim().length > 0).length
+  }), [text]);
 
   return (
-    <div className="space-y-8">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { label: 'Words', value: stats.words },
-          { label: 'Characters', value: stats.chars },
-          { label: 'Sentences', value: stats.sentences },
-          { label: 'Paragraphs', value: stats.paragraphs },
-        ].map((stat) => (
-          <div key={stat.label} className="glass p-4 rounded-xl border border-white/10 text-center">
-            <p className="text-xs text-zinc-500 uppercase tracking-wider mb-1">{stat.label}</p>
-            <p className="text-2xl font-display font-bold text-indigo-400">{stat.value}</p>
+    <div className="space-y-8 md:space-y-12">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+        {Object.entries(stats).map(([label, value]) => (
+          <div key={label} className="glass-card p-6 md:p-8 rounded-2xl md:rounded-3xl border border-white/5 text-center group hover:border-indigo-500/30 transition-colors">
+            <p className="text-[10px] md:text-xs font-bold text-zinc-500 uppercase tracking-[0.2em] mb-2 md:mb-3 group-hover:text-indigo-400 transition-colors">{label}</p>
+            <p className="text-2xl md:text-4xl font-display font-extrabold text-white text-glow">{value}</p>
           </div>
         ))}
       </div>
-      
-      <textarea
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder="Start typing or paste text..."
-        className="w-full h-80 glass p-6 rounded-2xl border border-white/10 focus:border-indigo-500/50 outline-none resize-none text-zinc-300 placeholder:text-zinc-600 transition-all"
-      />
+      <div className="relative group">
+        <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500/10 to-purple-500/10 rounded-2xl md:rounded-[2.5rem] blur opacity-0 group-focus-within:opacity-100 transition duration-500" />
+        <textarea 
+          value={text} 
+          onChange={(e) => setText(e.target.value)} 
+          placeholder="Start typing or paste your content here..." 
+          className="relative w-full h-64 md:h-96 glass-card p-8 md:p-12 rounded-2xl md:rounded-[2.5rem] border border-white/10 outline-none text-zinc-200 text-lg md:text-xl leading-relaxed transition-all focus:border-indigo-500/50 resize-none" 
+        />
+      </div>
     </div>
   );
 };
@@ -436,60 +423,34 @@ const WordCounter = () => {
 const Calculator = () => {
   const [display, setDisplay] = useState('0');
   const [equation, setEquation] = useState('');
-
   const handleBtn = (val: string) => {
-    if (val === 'C') {
-      setDisplay('0');
-      setEquation('');
-      return;
-    }
+    if (val === 'C') { setDisplay('0'); setEquation(''); return; }
     if (val === '=') {
-      try {
-        // Safe evaluation
-        const result = eval(equation.replace(/×/g, '*').replace(/÷/g, '/'));
-        setDisplay(String(result));
-        setEquation(String(result));
-      } catch {
-        setDisplay('Error');
-      }
+      try { const res = eval(equation.replace(/×/g, '*').replace(/÷/g, '/')); setDisplay(String(res)); setEquation(String(res)); }
+      catch { setDisplay('Error'); }
       return;
     }
-    
-    const lastChar = equation.slice(-1);
-    const ops = ['+', '-', '×', '÷'];
-    
-    if (ops.includes(val) && ops.includes(lastChar)) {
-      setEquation(equation.slice(0, -1) + val);
-      return;
-    }
-
+    if (val === 'DEL') { setEquation(e => e.slice(0, -1)); return; }
     setEquation(prev => prev === '0' ? val : prev + val);
-    setDisplay(prev => (prev === '0' || ops.includes(lastChar)) ? val : prev + val);
+    setDisplay(prev => (prev === '0' || ['+', '-', '×', '÷'].includes(equation.slice(-1))) ? val : prev + val);
   };
 
-  const btns = [
-    'C', '(', ')', '÷',
-    '7', '8', '9', '×',
-    '4', '5', '6', '-',
-    '1', '2', '3', '+',
-    '0', '.', 'DEL', '='
-  ];
-
   return (
-    <div className="max-w-xs mx-auto glass p-6 rounded-3xl border border-white/10 shadow-2xl">
-      <div className="mb-6 text-right">
-        <p className="text-zinc-500 text-sm h-6 font-mono overflow-hidden">{equation || ' '}</p>
-        <p className="text-4xl font-display font-bold text-white truncate">{display}</p>
+    <div className="max-w-sm mx-auto glass-card p-6 md:p-8 rounded-3xl md:rounded-[2.5rem] border border-white/10 shadow-2xl">
+      <div className="mb-6 md:mb-10 text-right px-2 md:px-4">
+        <p className="text-zinc-500 text-base md:text-lg h-6 md:h-8 font-mono tracking-wider overflow-hidden">{equation || ' '}</p>
+        <p className="text-4xl md:text-6xl font-display font-bold text-white truncate text-glow">{display}</p>
       </div>
-      <div className="grid grid-cols-4 gap-3">
-        {btns.map((btn) => (
-          <button
-            key={btn}
-            onClick={() => btn === 'DEL' ? setEquation(e => e.slice(0, -1)) : handleBtn(btn)}
-            className={`h-14 rounded-2xl font-semibold text-lg transition-all active:scale-95 ${
-              btn === '=' ? 'bg-indigo-600 hover:bg-indigo-500 text-white col-span-1' :
-              ['÷', '×', '-', '+', 'C', '(', ')', 'DEL'].includes(btn) ? 'bg-white/10 hover:bg-white/20 text-indigo-400' :
-              'bg-white/5 hover:bg-white/10 text-zinc-300'
+      <div className="grid grid-cols-4 gap-2 md:gap-4">
+        {['C', '(', ')', '÷', '7', '8', '9', '×', '4', '5', '6', '-', '1', '2', '3', '+', '0', '.', 'DEL', '='].map(btn => (
+          <button 
+            key={btn} 
+            onClick={() => handleBtn(btn)} 
+            className={`h-12 md:h-16 rounded-xl md:rounded-2xl font-bold text-lg md:text-xl transition-all active:scale-90 flex items-center justify-center ${
+              btn === '=' ? 'accent-gradient text-white shadow-lg shadow-indigo-500/20' : 
+              ['÷', '×', '-', '+'].includes(btn) ? 'bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20' :
+              ['C', 'DEL', '(', ')'].includes(btn) ? 'bg-white/5 text-zinc-400 hover:bg-white/10' :
+              'bg-white/[0.03] text-zinc-200 hover:bg-white/[0.08]'
             }`}
           >
             {btn}
@@ -500,213 +461,226 @@ const Calculator = () => {
   );
 };
 
-// --- Main Pages ---
-
+// --- Pages ---
 const HomePage = ({ onSelectTool }: { onSelectTool: (id: ToolId) => void }) => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [search, setSearch] = useState('');
+  const filtered = useMemo(() => TOOLS.filter(t => t.name.toLowerCase().includes(search.toLowerCase())), [search]);
 
-  const filteredTools = useMemo(() => {
-    return TOOLS.filter(t => 
-      t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      t.description.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [searchQuery]);
+  // Mouse tracking for card glow effect
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const cards = document.querySelectorAll('.card-glow');
+    cards.forEach((card) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      (card as HTMLElement).style.setProperty('--mouse-x', `${x}px`);
+      (card as HTMLElement).style.setProperty('--mouse-y', `${y}px`);
+    });
+  };
 
   return (
-    <div className="space-y-20 pt-20">
-      {/* Hero */}
-      <section className="text-center space-y-8 px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
+    <div className="space-y-32 pt-32" onMouseMove={handleMouseMove}>
+      <section className="text-center space-y-8 md:space-y-12 px-4 md:px-6">
+        <motion.div 
+          initial={{ opacity: 0, y: 40 }} 
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
         >
-          <h1 className="text-5xl md:text-7xl font-display font-bold tracking-tight mb-6">
-            All-in-One <span className="gradient-text">Free Online Tools</span>
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.5, duration: 0.5 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass border-white/10 text-indigo-400 text-xs md:text-sm font-bold mb-6 md:mb-8"
+          >
+            <Zap className="w-3 h-3 md:w-4 md:h-4 fill-current" /> v1.2.0 is now live
+          </motion.div>
+          <h1 className="text-5xl sm:text-7xl md:text-9xl font-display font-extrabold tracking-tight mb-6 md:mb-8 leading-[0.9] md:leading-[0.85]">
+            All-in-One <br />
+            <span className="gradient-text text-glow">Free Tools</span>
           </h1>
-          <p className="text-zinc-400 text-lg md:text-xl max-w-2xl mx-auto leading-relaxed">
-            Fast, secure, and premium utilities for your daily digital needs. No registration, no ads, just pure productivity.
+          <p className="text-zinc-400 text-base md:text-xl lg:text-2xl max-w-2xl mx-auto leading-relaxed font-light">
+            Fast, secure, and premium utilities designed for modern creators. 
+            No registration, no tracking, just pure performance.
           </p>
         </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-          className="max-w-xl mx-auto relative"
+        
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3, duration: 0.8 }}
+          className="max-w-2xl mx-auto relative group"
         >
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Search for a tool (e.g. 'compress', 'word')..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full glass py-4 pl-12 pr-6 rounded-2xl border border-white/10 focus:border-indigo-500/50 outline-none transition-all text-zinc-200 placeholder:text-zinc-600"
-          />
+          <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl md:rounded-[2rem] blur-xl opacity-10 group-hover:opacity-30 transition duration-1000" />
+          <div className="relative">
+            <Search className="absolute left-4 md:left-6 top-1/2 -translate-y-1/2 text-zinc-500 w-5 h-5 md:w-6 md:h-6 group-focus-within:text-indigo-400 transition-colors" />
+            <input 
+              type="text" 
+              placeholder="Search for a tool..." 
+              value={search} 
+              onChange={(e) => setSearch(e.target.value)} 
+              className="w-full glass py-4 md:py-7 pl-12 md:pl-16 pr-6 md:pr-8 rounded-2xl md:rounded-[2rem] border border-white/10 outline-none transition-all text-zinc-200 text-base md:text-lg focus:border-indigo-500/50 focus:ring-8 focus:ring-indigo-500/5" 
+            />
+          </div>
         </motion.div>
       </section>
 
-      {/* Featured Tools */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl font-display font-bold">Popular Tools</h2>
-          <div className="h-px flex-grow mx-8 bg-white/5 hidden md:block" />
+      <section className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 md:mb-16 gap-4">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+          >
+            <h2 className="text-4xl md:text-5xl font-display font-bold mb-3">Popular Tools</h2>
+            <p className="text-zinc-500 text-lg">Hand-picked utilities for your daily workflow</p>
+          </motion.div>
+          <div className="hidden md:flex gap-3">
+            <button className="w-12 h-12 rounded-full glass flex items-center justify-center text-zinc-500 hover:text-white hover:bg-white/10 cursor-pointer transition-all active:scale-90"><ArrowRight className="w-5 h-5 rotate-180" /></button>
+            <button className="w-12 h-12 rounded-full glass flex items-center justify-center text-zinc-500 hover:text-white hover:bg-white/10 cursor-pointer transition-all active:scale-90"><ArrowRight className="w-5 h-5" /></button>
+          </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredTools.map((tool, idx) => (
-            <motion.div
-              key={tool.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1 }}
-              onClick={() => onSelectTool(tool.id)}
-              className="glass p-8 rounded-3xl glass-hover group cursor-pointer flex flex-col items-start text-left"
-            >
-              <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center mb-6 group-hover:bg-indigo-500/20 transition-colors">
-                <tool.icon className="w-6 h-6 text-indigo-400" />
-              </div>
-              <h3 className="text-xl font-display font-bold mb-2 group-hover:text-indigo-400 transition-colors">{tool.name}</h3>
-              <p className="text-zinc-500 text-sm leading-relaxed mb-6">{tool.description}</p>
-              <div className="mt-auto flex items-center text-indigo-400 text-sm font-semibold gap-2 opacity-0 group-hover:opacity-100 transition-all translate-x-[-10px] group-hover:translate-x-0">
-                Open Tool <ArrowRight className="w-4 h-4" />
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* Why Choose Us */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="glass rounded-[3rem] p-12 md:p-20 overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/10 blur-[120px] rounded-full -mr-48 -mt-48" />
-          <div className="relative z-10 grid grid-cols-1 md:grid-cols-3 gap-12">
-            <div className="space-y-4">
-              <Zap className="w-8 h-8 text-indigo-400" />
-              <h4 className="text-xl font-bold">Instant Processing</h4>
-              <p className="text-zinc-500 text-sm">Everything happens in your browser. No server uploads, no waiting in queues.</p>
-            </div>
-            <div className="space-y-4">
-              <Shield className="w-8 h-8 text-indigo-400" />
-              <h4 className="text-xl font-bold">Privacy First</h4>
-              <p className="text-zinc-500 text-sm">Your files never leave your computer. We don't store or see any of your data.</p>
-            </div>
-            <div className="space-y-4">
-              <Info className="w-8 h-8 text-indigo-400" />
-              <h4 className="text-xl font-bold">100% Free</h4>
-              <p className="text-zinc-500 text-sm">No hidden costs, no subscriptions, and no annoying watermarks on your files.</p>
-            </div>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
+          <AnimatePresence mode="popLayout">
+            {filtered.map((tool, idx) => (
+              <motion.div 
+                key={tool.id} 
+                layout
+                initial={{ opacity: 0, y: 30 }} 
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                transition={{ delay: idx * 0.1, duration: 0.5, ease: "easeOut" }} 
+                onClick={() => onSelectTool(tool.id)} 
+                className="glass-card p-8 md:p-12 rounded-3xl md:rounded-[3rem] glass-hover group cursor-pointer flex flex-col items-start card-glow"
+              >
+                <div className="w-14 h-14 md:w-20 md:h-20 rounded-2xl md:rounded-[2rem] bg-indigo-500/5 flex items-center justify-center mb-8 md:mb-12 group-hover:scale-110 group-hover:bg-indigo-500/10 transition-all duration-700 shadow-inner overflow-hidden relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <tool.icon className="w-7 h-7 md:w-10 md:h-10 text-indigo-400 relative z-10" />
+                </div>
+                <div className="mb-8 md:mb-12">
+                  <span className="text-[10px] md:text-xs font-bold text-indigo-500 uppercase tracking-[0.2em] mb-3 md:mb-4 block opacity-70">{tool.category}</span>
+                  <h3 className="text-2xl md:text-3xl font-display font-bold mb-3 md:mb-5 group-hover:text-white transition-colors">{tool.name}</h3>
+                  <p className="text-zinc-500 text-sm md:text-lg leading-relaxed font-light">{tool.description}</p>
+                </div>
+                <div className="mt-auto flex items-center text-indigo-400 text-sm font-bold gap-2 group-hover:gap-4 transition-all duration-300">
+                  Try it now <ArrowRight className="w-4 h-4" />
+                </div>
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       </section>
     </div>
   );
 };
 
-const AboutPage = () => (
-  <div className="max-w-3xl mx-auto pt-32 px-4 space-y-12">
-    <section className="space-y-6">
-      <h1 className="text-4xl font-display font-bold">About <span className="text-indigo-400">OmniTools</span></h1>
-      <p className="text-zinc-400 leading-relaxed text-lg">
-        OmniTools was born from a simple idea: the internet needs better, faster, and more beautiful utilities that respect user privacy. 
-        Most online tools are cluttered with ads, require account creation, or upload your sensitive data to mysterious servers.
-      </p>
-    </section>
-
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-      <div className="glass p-8 rounded-3xl space-y-4">
-        <h3 className="text-xl font-bold">Our Mission</h3>
-        <p className="text-zinc-500 text-sm">To provide the highest quality digital tools for free, accessible to everyone, everywhere, without compromising on design or security.</p>
-      </div>
-      <div className="glass p-8 rounded-3xl space-y-4">
-        <h3 className="text-xl font-bold">Privacy Policy</h3>
-        <p className="text-zinc-500 text-sm">We use client-side processing. This means your files are processed locally in your browser. We never see your content.</p>
-      </div>
-    </div>
-
-    <section className="glass p-12 rounded-[2rem] text-center space-y-6">
-      <h2 className="text-2xl font-bold">Want to contribute?</h2>
-      <p className="text-zinc-500">OmniTools is an open-source project. We're always looking for new tool ideas and improvements.</p>
-      <button className="px-8 py-3 bg-white text-black rounded-xl font-bold hover:bg-zinc-200 transition-colors">
-        View on GitHub
-      </button>
-    </section>
-  </div>
-);
-
-// --- Main App ---
-
 export default function App() {
-  const [currentPage, setCurrentPage] = useState('home');
-  const [activeToolId, setActiveToolId] = useState<ToolId | null>(null);
-
-  const activeTool = useMemo(() => TOOLS.find(t => t.id === activeToolId), [activeToolId]);
-
-  const renderContent = () => {
-    if (activeToolId && activeTool) {
-      return (
-        <div className="pt-24 max-w-4xl mx-auto px-4">
-          <button 
-            onClick={() => setActiveToolId(null)}
-            className="flex items-center gap-2 text-zinc-500 hover:text-white mb-8 transition-colors group"
-          >
-            <ArrowRight className="w-4 h-4 rotate-180 group-hover:-translate-x-1 transition-transform" />
-            Back to All Tools
-          </button>
-          
-          <div className="flex items-center gap-4 mb-12">
-            <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 flex items-center justify-center">
-              <activeTool.icon className="w-8 h-8 text-indigo-400" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-display font-bold">{activeTool.name}</h1>
-              <p className="text-zinc-500">{activeTool.description}</p>
-            </div>
-          </div>
-
-          <div className="glass p-8 md:p-12 rounded-[2.5rem] border border-white/10 shadow-3xl">
-            {activeToolId === 'img-to-png' && <ImageToPng />}
-            {activeToolId === 'img-compress' && <ImageCompressor />}
-            {activeToolId === 'text-case' && <TextCaseConverter />}
-            {activeToolId === 'word-counter' && <WordCounter />}
-            {activeToolId === 'calculator' && <Calculator />}
-          </div>
-        </div>
-      );
-    }
-
-    switch (currentPage) {
-      case 'home': return <HomePage onSelectTool={setActiveToolId} />;
-      case 'tools': return <HomePage onSelectTool={setActiveToolId} />; // Tools page is essentially the grid
-      case 'about': return <AboutPage />;
-      default: return <HomePage onSelectTool={setActiveToolId} />;
-    }
-  };
-
-  // Scroll to top on page/tool change
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [currentPage, activeToolId]);
+  const [page, setPage] = useState('home');
+  const [activeId, setActiveId] = useState<ToolId | null>(null);
+  const tool = useMemo(() => TOOLS.find(t => t.id === activeId), [activeId]);
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Navbar onNavigate={(page) => { setCurrentPage(page); setActiveToolId(null); }} currentPage={currentPage} />
+    <div className="min-h-screen flex flex-col selection:bg-indigo-500/30 overflow-x-hidden">
+      <MeshBackground />
+      <Navbar onNavigate={(p) => { setPage(p); setActiveId(null); }} currentPage={page} />
       
-      <main className="flex-grow pb-20">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={activeToolId || currentPage}
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
-            transition={{ duration: 0.3 }}
-          >
-            {renderContent()}
+      <main className="flex-grow pb-20 md:pb-32 pt-20 md:pt-24">
+        <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
+          <AnimatePresence mode="wait">
+            <motion.div 
+              key={activeId || page} 
+              initial={{ opacity: 0, y: 20 }} 
+              animate={{ opacity: 1, y: 0 }} 
+              exit={{ opacity: 0, y: -20 }}
+              transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            >
+            {activeId && tool ? (
+              <div className="max-w-5xl mx-auto px-4 md:px-6 pt-8 md:pt-12">
+                <button 
+                  onClick={() => setActiveId(null)} 
+                  className="group flex items-center gap-3 text-zinc-500 hover:text-white mb-12 md:mb-16 transition-all"
+                >
+                  <div className="w-10 h-10 rounded-full glass flex items-center justify-center group-hover:bg-white/10 transition-all">
+                    <ArrowRight className="w-5 h-5 rotate-180" />
+                  </div>
+                  <span className="text-sm font-bold uppercase tracking-widest">Back to Dashboard</span>
+                </button>
+                
+                <div className="space-y-12 md:space-y-20">
+                  <div className="flex flex-col md:flex-row md:items-center gap-6 md:gap-10">
+                    <div className="w-16 h-16 md:w-24 md:h-24 rounded-2xl md:rounded-[2rem] accent-gradient flex items-center justify-center shadow-2xl shadow-indigo-500/20">
+                      <tool.icon className="w-8 h-8 md:w-12 md:h-12 text-white" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-bold text-indigo-500 uppercase tracking-[0.2em] mb-2 md:mb-4 block opacity-70">{tool.category}</span>
+                      <h1 className="text-4xl md:text-7xl font-display font-black tracking-tighter mb-2 md:mb-4 leading-none">{tool.name}</h1>
+                      <p className="text-zinc-500 text-lg md:text-xl font-light max-w-2xl">{tool.description}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="glass-card p-6 md:p-16 rounded-3xl md:rounded-[3rem] border border-white/10 shadow-2xl relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/5 blur-[120px] -mr-48 -mt-48" />
+                    <div className="relative z-10">
+                      {activeId === 'img-to-png' && <ImageToPng />}
+                      {activeId === 'img-compress' && <ImageCompressor />}
+                      {activeId === 'text-case' && <TextCaseConverter />}
+                      {activeId === 'word-counter' && <WordCounter />}
+                      {activeId === 'calculator' && <Calculator />}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : page === 'about' ? (
+              <div className="max-w-4xl mx-auto pt-20 md:pt-32 px-4 md:px-6 space-y-16 md:space-y-20">
+                <div className="text-center space-y-4 md:space-y-6">
+                  <h1 className="text-4xl md:text-7xl font-display font-extrabold tracking-tight">About <span className="gradient-text">OmniTools</span></h1>
+                  <p className="text-zinc-400 text-lg md:text-2xl max-w-2xl mx-auto leading-relaxed font-light">
+                    We believe premium tools should be accessible to everyone, without compromising on privacy or performance.
+                  </p>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
+                  <div className="glass-card p-8 md:p-12 rounded-2xl md:rounded-[2.5rem] space-y-4 md:space-y-6">
+                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-indigo-500/10 flex items-center justify-center">
+                      <Zap className="w-6 h-6 md:w-7 md:h-7 text-indigo-400" />
+                    </div>
+                    <h3 className="text-xl md:text-2xl font-bold">Our Mission</h3>
+                    <p className="text-zinc-500 text-base md:text-lg leading-relaxed">
+                      To provide a suite of high-quality digital tools that are fast, free, and beautiful. 
+                      We focus on the essentials, perfected for your daily workflow.
+                    </p>
+                  </div>
+                  <div className="glass-card p-8 md:p-12 rounded-2xl md:rounded-[2.5rem] space-y-4 md:space-y-6">
+                    <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-emerald-500/10 flex items-center justify-center">
+                      <Shield className="w-6 h-6 md:w-7 md:h-7 text-emerald-400" />
+                    </div>
+                    <h3 className="text-xl md:text-2xl font-bold">Privacy First</h3>
+                    <p className="text-zinc-500 text-base md:text-lg leading-relaxed">
+                      Your data is yours. All processing happens locally in your browser. 
+                      We never see your files, and we never store your data on any server.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="glass-card p-8 md:p-12 rounded-2xl md:rounded-[2.5rem] text-center space-y-6 md:space-y-8">
+                  <h3 className="text-2xl md:text-3xl font-bold">Open Source & Community Driven</h3>
+                  <p className="text-zinc-500 text-base md:text-lg max-w-2xl mx-auto">
+                    OmniTools is built with modern technologies and is constantly evolving based on user feedback. 
+                    Join us in building the best tool suite on the web.
+                  </p>
+                  <button className="w-full sm:w-auto px-8 py-4 glass glass-hover rounded-2xl font-bold flex items-center justify-center gap-3 mx-auto transition-all">
+                    <Github className="w-6 h-6" /> View on GitHub
+                  </button>
+                </div>
+              </div>
+            ) : <HomePage onSelectTool={setActiveId} />}
           </motion.div>
         </AnimatePresence>
-      </main>
-
-      <Footer />
-    </div>
-  );
+      </div>
+    </main>
+    
+    <Footer onNavigate={(p) => { setPage(p); setActiveId(null); }} />
+  </div>
+);
 }
